@@ -75,14 +75,32 @@ nav a:hover{color:var(--acc)}
 .bar i{transform-origin:left;animation:grow .9s cubic-bezier(.2,.8,.2,1) both}
 svg rect{transform-box:fill-box;transform-origin:bottom;animation:growY .8s cubic-bezier(.2,.8,.2,1) both}
 tbody tr{animation:rise .4s ease both}
+.authcard{display:none;max-width:420px;margin:0 auto 12px}
+body.locked .authcard{display:block}
+body.locked nav,body.locked .page{display:none!important}
+.modes{display:grid;gap:10px}
+.modes[hidden],form[hidden]{display:none}
+.lang{align-items:center}
+#sync{font-size:.8rem;color:var(--mute)}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 </style>
 </head>
-<body>
+<body class="locked">
 <main>
-<div class="lang" role="group" aria-label="Language"><button type="button" id="lID" aria-pressed="true">ID</button><button type="button" id="lEN" aria-pressed="false">EN</button></div>
+<div class="lang" role="group" aria-label="Language"><button type="button" id="lID" aria-pressed="true">ID</button><button type="button" id="lEN" aria-pressed="false">EN</button><span id="sync" aria-live="polite"></span><button type="button" id="lOut" hidden>Keluar</button></div>
 <h1>Catatan Keuangan</h1>
 <p class="tag">Ini catatan keuangan Dydy’s</p>
+<section class="card authcard" id="auth"><h2>Pilih mode</h2>
+  <div class="modes" id="modes">
+    <button class="save" id="mGuest" type="button">Coba sebagai Tamu (demo)</button>
+    <button class="sub" id="mDydy" type="button">Masuk sebagai Dydy</button>
+  </div>
+  <form id="fl" hidden>
+    <label>PIN<input id="lPin" type="password" inputmode="numeric" autocomplete="off" maxlength="6"></label>
+    <p class="err" id="lErr" role="alert"></p>
+    <button class="save" type="submit">Masuk</button>
+    <button class="sub" id="lBack" type="button">Kembali</button>
+  </form></section>
 <nav aria-label="Halaman"><a href="#aset" id="nA">Aset</a><a href="#operasional" id="nO">Operasional</a></nav>
 
 <section class="page" id="pA">
@@ -157,7 +175,8 @@ var esc=function(s){var d=document.createElement("div");d.textContent=s;return d
 var now=new Date(),pad=function(n){return String(n).padStart(2,"0")};
 var BLN=now.getFullYear()+"-"+pad(now.getMonth()+1),TGL=BLN+"-"+pad(now.getDate());
 var lb=function(k,pj){return new Date(k+"-01T00:00:00").toLocaleDateString(LOC,pj?{month:"long",year:"numeric"}:{month:"short",year:"2-digit"})};
-function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+var MODE=null;
+function save(){if(MODE!=="dydy")return;try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 function val(id,m){var ks=Object.keys(S.snap[id]||{}).filter(function(k){return k<=m}).sort();return ks.length?S.snap[id][ks[ks.length-1]]:0}
 function months(){var s={};Object.keys(S.snap).forEach(function(id){Object.keys(S.snap[id]).forEach(function(k){s[k]=1})});return Object.keys(s).sort()}
 function pct(a,b){return b>0?((a-b)/b*100):null}
@@ -240,7 +259,7 @@ $("aBln").value=BLN;$("uBln").value=BLN;$("kTgl").value=TGL;$("oBln").value=BLN;
 var LANG="id",LOC="id-ID";
 try{if(localStorage.getItem("keuangan-lang")==="en")LANG="en"}catch(e){}
 LOC=LANG==="en"?"en-US":"id-ID";
-var TR={"Catatan Keuangan":"Financial Notes","Ini catatan keuangan Dydy’s":"These are Dydy’s financial notes","Total aset":"Total assets","Pertumbuhan aset per bulan":"Monthly asset growth","Tambah aset":"Add asset","Nama aset":"Asset name","Jenis":"Type","Kas & tabungan":"Cash & savings","Investasi":"Investments","Emas":"Gold","Properti":"Property","Kendaraan":"Vehicles","Lainnya":"Other","Nilai awal (Rp)":"Initial value (Rp)","Bulan":"Month","Simpan aset":"Save asset","Perbarui nilai aset":"Update asset value","Aset":"Asset","Nilai (Rp)":"Value (Rp)","Simpan nilai":"Save value","Kurangi aset":"Reduce asset","Tanggal":"Date","Jumlah pengurangan (Rp)":"Amount to reduce (Rp)","Keterangan":"Note","Detail aset":"Asset details","Riwayat pengurangan":"Reduction history","Total operasional bulan ini":"Total operations this month","Anggaran bulan ini":"This month’s budget","Tambah pembayaran":"Add payment","Bab":"Category","Sub bab":"Subcategory","Jumlah (Rp)":"Amount (Rp)","Catatan":"Note","Simpan pembayaran":"Save payment","Rincian per bab":"Breakdown by category","Riwayat pembayaran":"Payment history","Nilai terkini":"Current value","Vs bulan lalu":"Vs last month","Aset dihapus":"Asset deleted","Pengurangan":"Reduction","Hapus":"Delete","Hapus aset":"Delete asset","Hapus pembayaran":"Delete payment","Grafik total aset per bulan":"Chart of total assets per month","Halaman":"Pages","Pilih bulan":"Select month","Tabungan BCA":"BCA savings","Tarik tabungan untuk servis":"Withdrew savings for repairs","Nasi padang":"Padang rice","Isi nama aset.":"Enter the asset name.","Isi nilai aset (boleh 0).":"Enter the asset value (0 is allowed).","Pilih bulan.":"Select a month.","Tambahkan aset terlebih dahulu.":"Add an asset first.","Isi nilai aset.":"Enter the asset value.","Isi jumlah lebih dari 0.":"Enter an amount greater than 0.","Pilih tanggal.":"Select a date.","Belum ada data. Tambahkan aset pertama.":"No data yet. Add your first asset.","Belum ada aset.":"No assets yet.","Belum ada pengurangan aset.":"No asset reductions yet.","Belum ada pembayaran bulan ini.":"No payments this month.","Belum ada riwayat.":"No history yet.","Perbarui nilai tiap bulan untuk melihat pertumbuhan.":"Update values each month to see growth.","Makan":"Food","Bayar kos":"Boarding house rent","Biaya lain-lain":"Other expenses","Sarapan":"Breakfast","Makan siang":"Lunch","Makan malam":"Dinner","Camilan & minuman":"Snacks & drinks","Belanja bahan":"Groceries","Sewa kos":"Room rent","Listrik & air":"Electricity & water","Internet":"Internet","Laundry":"Laundry","Transportasi":"Transport","Pulsa & data":"Phone & data","Kesehatan":"Health","Hiburan":"Entertainment","Hadiah & donasi":"Gifts & donations"};
+var TR={"Catatan Keuangan":"Financial Notes","Ini catatan keuangan Dydy’s":"These are Dydy’s financial notes","Total aset":"Total assets","Pertumbuhan aset per bulan":"Monthly asset growth","Tambah aset":"Add asset","Nama aset":"Asset name","Jenis":"Type","Kas & tabungan":"Cash & savings","Investasi":"Investments","Emas":"Gold","Properti":"Property","Kendaraan":"Vehicles","Lainnya":"Other","Nilai awal (Rp)":"Initial value (Rp)","Bulan":"Month","Simpan aset":"Save asset","Perbarui nilai aset":"Update asset value","Aset":"Asset","Nilai (Rp)":"Value (Rp)","Simpan nilai":"Save value","Kurangi aset":"Reduce asset","Tanggal":"Date","Jumlah pengurangan (Rp)":"Amount to reduce (Rp)","Keterangan":"Note","Detail aset":"Asset details","Riwayat pengurangan":"Reduction history","Total operasional bulan ini":"Total operations this month","Anggaran bulan ini":"This month’s budget","Tambah pembayaran":"Add payment","Bab":"Category","Sub bab":"Subcategory","Jumlah (Rp)":"Amount (Rp)","Catatan":"Note","Simpan pembayaran":"Save payment","Rincian per bab":"Breakdown by category","Riwayat pembayaran":"Payment history","Nilai terkini":"Current value","Vs bulan lalu":"Vs last month","Aset dihapus":"Asset deleted","Pengurangan":"Reduction","Hapus":"Delete","Hapus aset":"Delete asset","Hapus pembayaran":"Delete payment","Grafik total aset per bulan":"Chart of total assets per month","Halaman":"Pages","Pilih bulan":"Select month","Pilih mode":"Choose a mode","Coba sebagai Tamu (demo)":"Try as Guest (demo)","Masuk sebagai Dydy":"Sign in as Dydy","PIN":"PIN","Masuk":"Sign in","Kembali":"Back","Keluar":"Sign out","PIN salah.":"Wrong PIN.","Terlalu banyak percobaan. Coba lagi nanti.":"Too many attempts. Try again later.","Mode demo (data contoh, tidak disimpan)":"Demo mode (sample data, not saved)","Tabungan BCA":"BCA savings","Tarik tabungan untuk servis":"Withdrew savings for repairs","Nasi padang":"Padang rice","Isi nama aset.":"Enter the asset name.","Isi nilai aset (boleh 0).":"Enter the asset value (0 is allowed).","Pilih bulan.":"Select a month.","Tambahkan aset terlebih dahulu.":"Add an asset first.","Isi nilai aset.":"Enter the asset value.","Isi jumlah lebih dari 0.":"Enter an amount greater than 0.","Pilih tanggal.":"Select a date.","Belum ada data. Tambahkan aset pertama.":"No data yet. Add your first asset.","Belum ada aset.":"No assets yet.","Belum ada pengurangan aset.":"No asset reductions yet.","Belum ada pembayaran bulan ini.":"No payments this month.","Belum ada riwayat.":"No history yet.","Perbarui nilai tiap bulan untuk melihat pertumbuhan.":"Update values each month to see growth.","Makan":"Food","Bayar kos":"Boarding house rent","Biaya lain-lain":"Other expenses","Sarapan":"Breakfast","Makan siang":"Lunch","Makan malam":"Dinner","Camilan & minuman":"Snacks & drinks","Belanja bahan":"Groceries","Sewa kos":"Room rent","Listrik & air":"Electricity & water","Internet":"Internet","Laundry":"Laundry","Transportasi":"Transport","Pulsa & data":"Phone & data","Kesehatan":"Health","Hiburan":"Entertainment","Hadiah & donasi":"Gifts & donations"};
 function g(p){return Object.prototype.hasOwnProperty.call(TR,p)?TR[p]:p}
 var RX=[[/^Anggaran (.+) \(Rp\)$/,function(m,a){return "Budget: "+g(a)+" (Rp)"}],[/^Pengurangan melebihi nilai aset \((.*)\)\.$/,function(m,a){return "Reduction exceeds the asset value ("+a+")."}],[/^Dibanding /,function(){return "Compared to "}],[/^([\d,]+) (jt|rb)$/,function(m,n,u){return n.replace(",",".")+(u==="jt"?"M":"K")}],[/^Terpakai .*/,function(s){return s.replace("Terpakai ","Used ").replace(" dari "," of ").replace("Lewat ","Over by ").replace("Sisa ","Left ").replace("Isi anggaran untuk memantau sisa.","Set a budget to track what is left.")}]];
 function tx(s){var k=s.trim();if(!k)return s;var r;
@@ -264,7 +283,38 @@ function setLang(l){LANG=l;LOC=l==="en"?"en-US":"id-ID";try{localStorage.setItem
   document.documentElement.lang=l;document.title=l==="en"?"Dydy’s Financial Notes":"Catatan Keuangan Dydy’s";
   renderAset();renderOps()}
 $("lID").onclick=function(){setLang("id")};$("lEN").onclick=function(){setLang("en")};
+var PINH=2768378434727981;
+function h53(s){var h1=0xdeadbeef,h2=0x41c6ce57,i,ch;for(i=0;i<s.length;i++){ch=s.charCodeAt(i);h1=Math.imul(h1^ch,2654435761);h2=Math.imul(h2^ch,1597334677)}h1=Math.imul(h1^(h1>>>16),2246822507);h1^=Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507);h2^=Math.imul(h1^(h1>>>13),3266489909);return 4294967296*(2097151&h2)+(h1>>>0)}
+var fails=0,lockUntil=0;
+function st(t){var e=$("sync");e.textContent=t?(LANG==="en"&&Object.prototype.hasOwnProperty.call(TR,t)?TR[t]:t):""}
+function er(m){$("lErr").textContent=m?(LANG==="en"?g(m):m):""}
+function ym(o){var d=new Date();d.setDate(1);d.setMonth(d.getMonth()+o);return d.getFullYear()+"-"+pad(d.getMonth()+1)}
+function empty(){return {aset:[],snap:{},ops:[],budget:{},kurang:[]}}
+function loadD(){var r=null;try{r=JSON.parse(localStorage.getItem(KEY))}catch(e){}if(!(r&&r.aset))r=empty();if(!r.kurang)r.kurang=[];return r}
+function sample(){var m=[ym(-3),ym(-2),ym(-1),ym(0)],a=[["Tabungan","Kas & tabungan",[8000000,8600000,9200000,9500000]],["Reksa dana","Investasi",[5000000,5150000,5400000,5600000]],["Emas","Emas",[3000000,3050000,3200000,3300000]]],D=empty(),b=ym(0),td=new Date().getDate();
+  a.forEach(function(x,i){var id="demo"+i;D.aset.push({id:id,nama:x[0],jenis:x[1]});D.snap[id]={};m.forEach(function(k,j){D.snap[id][k]=x[2][j]})});
+  [[1,"Bayar kos","Sewa kos",1200000,"Kos bulan ini"],[2,"Makan","Sarapan",18000,"Bubur ayam"],[3,"Makan","Makan siang",35000,"Nasi ayam"],[4,"Makan","Belanja bahan",150000,"Belanja mingguan"],[5,"Biaya lain-lain","Transportasi",50000,"Isi saldo ojol"],[6,"Makan","Camilan & minuman",28000,"Kopi susu"],[7,"Biaya lain-lain","Hiburan",75000,"Nonton"]].forEach(function(r,i){D.ops.push({id:i+1,tgl:b+"-"+pad(Math.min(r[0],td)),bab:r[1],sub:r[2],jml:r[3],cat:r[4]})});
+  D.budget[b]={"Makan":1500000,"Bayar kos":1200000,"Biaya lain-lain":400000};return D}
+function enter(mode){MODE=mode;try{sessionStorage.setItem("keuangan-mode",mode)}catch(e){}
+  S=mode==="guest"?sample():loadD();
+  document.body.classList.remove("locked");$("lOut").hidden=false;
+  st(mode==="guest"?"Mode demo (data contoh, tidak disimpan)":"Dydy");
+  renderAset();renderOps();route()}
+function lock(){MODE=null;try{sessionStorage.removeItem("keuangan-mode")}catch(e){}
+  S=empty();document.body.classList.add("locked");$("lOut").hidden=true;st("");
+  $("modes").hidden=false;$("fl").hidden=true;$("lPin").value="";er("");renderAset();renderOps()}
+$("mGuest").onclick=function(){enter("guest")};
+$("mDydy").onclick=function(){$("modes").hidden=true;$("fl").hidden=false;er("");$("lPin").focus()};
+$("lBack").onclick=function(){$("fl").hidden=true;$("modes").hidden=false;$("lPin").value="";er("")};
+$("lOut").onclick=lock;
+$("fl").onsubmit=function(e){e.preventDefault();
+  if(Date.now()<lockUntil){er("Terlalu banyak percobaan. Coba lagi nanti.");return}
+  var p=$("lPin").value.trim();$("lPin").value="";
+  if(h53("dydys:"+p)===PINH){fails=0;er("");$("fl").hidden=true;$("modes").hidden=false;enter("dydy")}
+  else{fails++;if(fails>=5){fails=0;lockUntil=Date.now()+30000;er("Terlalu banyak percobaan. Coba lagi nanti.")}else er("PIN salah.")}};
 isiSub();route();setLang(LANG);
+var sm=null;try{sm=sessionStorage.getItem("keuangan-mode")}catch(e){}
+if(sm==="guest"||sm==="dydy")enter(sm);else S=empty(),renderAset(),renderOps();
 })();
 </script>
 </body>
